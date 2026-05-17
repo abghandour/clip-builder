@@ -65,9 +65,12 @@ for entry in "${AI_CLIS[@]}"; do
     fi
 done
 
-# MiniMax has no canonical CLI tool — it's HTTPS API only. Users authenticate
-# by setting MINIMAX_API_KEY in .env. No install step required.
-echo "  • MiniMax (API only) — set MINIMAX_API_KEY in .env to enable"
+# API-key-only providers (no CLI to install). Listed here so the summary at
+# the end of this script can remind the user which keys unlock which
+# providers. Auth happens via env vars loaded from .env at app startup.
+echo "  • MiniMax  (AI tasks, API only)      — set MINIMAX_API_KEY in .env to enable"
+echo "  • OpenAI   (transcription, API only) — set OPENAI_API_KEY in .env to enable"
+echo "  • Gemini   (transcription, API only) — set GEMINI_API_KEY in .env (or use Gemini CLI)"
 
 # ── Step 5: Python venv + deps + folders ────────────────────────────────────
 echo "Step 5/5: Setting up Python environment..."
@@ -94,6 +97,15 @@ fi
 # when a profile is saved.
 mkdir -p assets/music assets/videos data .cache/thumbnails
 mkdir -p "$HOME/Documents/ClipBuilder"
+
+# Seed .env from .env.example on first install so the user has a single
+# place to paste API keys (MiniMax / OpenAI / Gemini). Never overwrite an
+# existing .env — that's where their keys live.
+if [ ! -f .env ] && [ -f .env.example ]; then
+    cp .env.example .env
+    echo "  • Created .env from .env.example — paste API keys there to enable"
+    echo "    MiniMax, OpenAI transcription, and Gemini transcription."
+fi
 
 # ── Auto-update setup ───────────────────────────────────────────────────────
 echo "Setting up auto-updates..."
@@ -137,6 +149,11 @@ if [ ${#FAILED[@]} -gt 0 ]; then
     done
 fi
 
+echo ""
+echo "API-key providers (optional — edit .env to enable):"
+echo "  • MiniMax (AI)             — MINIMAX_API_KEY"
+echo "  • OpenAI Whisper (transcribe) — OPENAI_API_KEY"
+echo "  • Gemini audio (transcribe)   — GEMINI_API_KEY"
 echo ""
 echo "  To launch: double-click ClipBuilder.command"
 echo "  Pick which AI to use on the /settings page after launching."

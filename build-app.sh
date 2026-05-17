@@ -44,6 +44,7 @@ cp -R assets "$BUNDLED/assets"
 cp requirements.txt "$BUNDLED/"
 cp Install.command "$BUNDLED/"
 cp ClipBuilder.command "$BUNDLED/"
+cp .env.example "$BUNDLED/" 2>/dev/null || true
 cp README.md "$BUNDLED/" 2>/dev/null || true
 find "$BUNDLED" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 find "$BUNDLED" -name "*.pyc" -delete 2>/dev/null || true
@@ -196,6 +197,7 @@ echo "Copying app files..."
 rsync -a "\$RESOURCES/src/" "\$DATA_DIR/src/"
 rsync -a "\$RESOURCES/assets/" "\$DATA_DIR/assets/"
 cp "\$RESOURCES/requirements.txt" "\$DATA_DIR/"
+cp "\$RESOURCES/.env.example" "\$DATA_DIR/" 2>/dev/null || true
 # App-wide runtime dirs. Per-profile Input/Output folders live under
 # ~/Documents/ClipBuilder/<ProfileName>/ and are auto-created on save.
 mkdir -p assets/music assets/videos data .cache/thumbnails
@@ -218,6 +220,10 @@ if ! command -v node &>/dev/null; then
 fi
 
 # Install all three supported AI CLIs (user picks which to use on /settings).
+# A fourth provider — MiniMax — is API-only and authenticates via
+# MINIMAX_API_KEY in .env, so it has no install step here. Same for the
+# transcription-only cloud providers (OpenAI Whisper + Gemini audio): they
+# read OPENAI_API_KEY / GEMINI_API_KEY from .env on first use.
 for entry in \\
     "claude|@anthropic-ai/claude-code|Claude Code" \\
     "gemini|@google/gemini-cli|Gemini CLI" \\
@@ -233,6 +239,16 @@ echo "Setting up Python environment..."
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -q -r requirements.txt
+
+# Ensure yt-dlp is current. YouTube/TikTok/Instagram defenses change often
+# and stale yt-dlp is the most common cause of "Import Video" failures.
+pip install -q --upgrade yt-dlp 2>/dev/null || true
+
+# Seed .env from .env.example so users have one place to paste keys for
+# the API-only providers (MiniMax, OpenAI transcription, Gemini transcription).
+if [ ! -f .env ] && [ -f .env.example ]; then
+    cp .env.example .env
+fi
 
 echo "Setting up auto-updates..."
 if [ ! -d ".git" ]; then
