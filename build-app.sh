@@ -273,8 +273,13 @@ osascript -e 'tell application "Terminal" to close front window' 2>/dev/null &
 INSTALL
 chmod +x "${MACOS}/_install"
 
-# Remove osacompile's default icon
+# Remove osacompile's default icon (legacy form) AND the modern asset
+# catalog. macOS 12+ osacompile bundles the applet's default icon as
+# AppIcon inside Assets.car, which silently outranks AppIcon.icns in
+# Resources — so without nuking Assets.car the bundle would render the
+# generic AppleScript applet icon instead of our ClipBuilder logo.
 rm -f "${RESOURCES}/applet.icns" 2>/dev/null
+rm -f "${RESOURCES}/Assets.car" 2>/dev/null
 
 # Ad-hoc sign the app so macOS treats it as a valid bundle.
 # Users still need to clear quarantine (xattr -cr) for internet downloads,
